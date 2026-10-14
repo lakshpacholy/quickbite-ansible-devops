@@ -1,0 +1,29 @@
+---
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Deploy reverse-proxy site configuration
+  ansible.builtin.template:
+    src: quickbite.conf.j2
+    dest: /etc/nginx/sites-available/quickbite.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable the site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/quickbite.conf
+    dest: /etc/nginx/sites-enabled/quickbite.conf
+    state: link
+  notify: Reload nginx
+
+- name: Validate Nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Enable and start Nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: started

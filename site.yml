@@ -1,0 +1,43 @@
+---
+# Master playbook: configures every QuickBite server
+- name: Baseline configuration for all servers
+  hosts: quickbite
+  gather_facts: true
+  roles:
+    - common
+
+- name: Configure the PostgreSQL data tier
+  hosts: dbservers
+  gather_facts: true
+  roles:
+    - postgres
+
+- name: Deploy QuickBite API (Node.js + Nginx)
+  hosts: webservers
+  gather_facts: true
+  roles:
+    - nodeapp
+    - nginx
+
+  post_tasks:
+    - name: Verify the API answers through Nginx
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ nginx_http_port }}/health"
+        status_code: 200
+        return_content: true
+      register: health
+      retries: 8
+      delay: 3
+      until: health.status == 200
+
+    - name: Read the menu through Nginx
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ nginx_http_port }}/menu"
+        return_content: true
+      register: menu
+
+    - name: Show deployment verification (shown in demo)
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} is healthy; menu served from
+          {{ menu.json.source }} with {{ menu.json.items | length }} items

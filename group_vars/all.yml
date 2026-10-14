@@ -1,0 +1,24 @@
+---
+# Variables shared by every host
+app_name: quickbite
+app_user: quickbite
+app_dir: /opt/quickbite
+app_port: 3000
+app_version: "1.0.0"
+app_environment: production
+
+# Database connection settings (used by the app AND by the postgres role)
+db_name: quickbite
+db_user: quickbite_app
+# Demo credential only. In production keep this in Ansible Vault.
+db_password: "QuickBite_Demo_2026"
+db_host: 127.0.0.1
+db_port: 5432
+
+common_packages:
+  - git
+  - curl
+  - vim
+  - htop
+  - ufw
+  - acl

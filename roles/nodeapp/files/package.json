@@ -1,0 +1,11 @@
+{
+  "name": "quickbite-api",
+  "version": "1.0.0",
+  "description": "QuickBite food delivery API (demo for Ansible assignment)",
+  "main": "app.js",
+  "license": "ISC",
+  "dependencies": {
+    "express": "4.19.2",
+    "pg": "8.11.5"
+  }
+}

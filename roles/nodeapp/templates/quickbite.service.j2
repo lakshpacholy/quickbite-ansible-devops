@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ app_name }} food delivery API (Node.js)
+After=network.target postgresql.service
+
+[Service]
+User={{ app_user }}
+Group={{ app_user }}
+WorkingDirectory={{ app_dir }}
+EnvironmentFile=/etc/quickbite.env
+ExecStart=/usr/bin/node {{ app_dir }}/app.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

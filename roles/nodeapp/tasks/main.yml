@@ -1,0 +1,61 @@
+---
+- name: Install Node.js and npm
+  ansible.builtin.apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+
+- name: Create application directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+
+- name: Copy application source
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ app_dir }}/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  loop:
+    - app.js
+    - package.json
+  notify: Restart quickbite
+
+- name: Install Node dependencies (npm)
+  community.general.npm:
+    path: "{{ app_dir }}"
+    production: true
+    state: present
+  notify: Restart quickbite
+
+- name: Write the environment file (secrets stay out of the unit file)
+  ansible.builtin.template:
+    src: quickbite.env.j2
+    dest: /etc/quickbite.env
+    owner: root
+    group: "{{ app_user }}"
+    mode: "0640"
+  notify: Restart quickbite
+
+- name: Install systemd unit for the API
+  ansible.builtin.template:
+    src: quickbite.service.j2
+    dest: /etc/systemd/system/quickbite.service
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart quickbite
+
+- name: Flush handlers so systemd sees the unit before we start it
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start the application service
+  ansible.builtin.systemd:
+    name: quickbite
+    enabled: true
+    state: started

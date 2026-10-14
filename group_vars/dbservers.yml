@@ -1,0 +1,8 @@
+---
+# Variables only for the [dbservers] group
+menu_seed:
+  - { name: "Margherita Pizza", price: 249 }
+  - { name: "Veg Burger", price: 149 }
+  - { name: "Paneer Wrap", price: 179 }
+  - { name: "Masala Fries", price: 99 }
+  - { name: "Cold Coffee", price: 119 }

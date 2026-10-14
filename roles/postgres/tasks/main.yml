@@ -1,0 +1,71 @@
+---
+- name: Install PostgreSQL and the Python driver Ansible needs
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+      - acl
+    state: present
+
+- name: Enable and start PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: Create the application database user
+  community.postgresql.postgresql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    no_password_changes: true
+  become_user: postgres
+  no_log: true
+
+- name: Create the application database
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    owner: "{{ db_user }}"
+  become_user: postgres
+
+- name: Create the menu_items table
+  community.postgresql.postgresql_table:
+    db: "{{ db_name }}"
+    name: menu_items
+    columns:
+      - id serial PRIMARY KEY
+      - name text NOT NULL
+      - price integer NOT NULL
+    owner: "{{ db_user }}"
+  become_user: postgres
+
+- name: Create the orders table
+  community.postgresql.postgresql_table:
+    db: "{{ db_name }}"
+    name: orders
+    columns:
+      - id serial PRIMARY KEY
+      - item_id integer NOT NULL
+      - quantity integer NOT NULL
+      - created_at timestamptz NOT NULL DEFAULT now()
+    owner: "{{ db_user }}"
+  become_user: postgres
+
+- name: Check whether the menu is already seeded
+  community.postgresql.postgresql_query:
+    db: "{{ db_name }}"
+    query: SELECT count(*) AS n FROM menu_items
+  register: menu_count
+  changed_when: false
+  become_user: postgres
+
+- name: Seed the menu items (first run only)
+  community.postgresql.postgresql_query:
+    db: "{{ db_name }}"
+    query: "INSERT INTO menu_items (name, price) VALUES (%(name)s, %(price)s)"
+    named_args:
+      name: "{{ item.name }}"
+      price: "{{ item.price }}"
+  loop: "{{ menu_seed }}"
+  when: menu_count.query_result[0].n == 0
+  become_user: postgres

@@ -1,0 +1,7 @@
+---
+# Variables only for the [webservers] group
+nginx_http_port: 8080
+nginx_server_name: quickbite.local
+open_firewall_ports:
+  - 22
+  - 8080
